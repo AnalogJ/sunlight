@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/analogj/go-util/utils"
-	"github.com/packagrio/gocli-template/pkg"
-	"github.com/packagrio/gocli-template/pkg/config"
-	"github.com/packagrio/gocli-template/pkg/errors"
-	"github.com/packagrio/gocli-template/pkg/version"
+	"github.com/analogj/sunlight/pkg"
+	"github.com/analogj/sunlight/pkg/config"
+	"github.com/analogj/sunlight/pkg/errors"
+	"github.com/analogj/sunlight/pkg/version"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"io"
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	app := &cli.App{
-		Name:     "appcli",
+		Name:     "sunlight",
 		Usage:    "Example go application",
 		Version:  version.VERSION,
 		Compiled: time.Now(),
@@ -48,7 +48,7 @@ func main() {
 		},
 		Before: func(c *cli.Context) error {
 
-			packagrUrl := "github.com/packagrio/gocli-template"
+			packagrUrl := "github.com/analogj/sunlight"
 
 			versionInfo := fmt.Sprintf("%s.%s-%s", goos, goarch, version.VERSION)
 

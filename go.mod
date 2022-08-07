@@ -1,4 +1,4 @@
-module github.com/packagrio/gocli-template
+module github.com/analogj/sunlight
 
 go 1.18
 

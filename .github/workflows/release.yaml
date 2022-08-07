@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/packagrio/packagr:latest-golang
     env:
-      PROJECT_PATH: /go/src/github.com/packagrio/gocli-template
+      PROJECT_PATH: /go/src/github.com/analogj/sunlight
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -40,15 +40,15 @@ jobs:
 
           go test -mod vendor -v -tags "static" ./...
           # build linux binary
-          go build -mod vendor -ldflags "-X main.goos=linux -X main.goarch=amd64" -o appcli-linux-amd64 -tags "static" cmd/appcli/appcli.go
+          go build -mod vendor -ldflags "-X main.goos=linux -X main.goarch=amd64" -o sunlight-linux-amd64 -tags "static" cmd/sunlight/sunlight.go
 
           # build mac binary
-          go build -mod vendor -ldflags "-X main.goos=darwin -X main.goarch=amd64" -o appcli-darwin-amd64 -tags "static" cmd/appcli/appcli.go
+          go build -mod vendor -ldflags "-X main.goos=darwin -X main.goarch=amd64" -o sunlight-darwin-amd64 -tags "static" cmd/sunlight/sunlight.go
 
-          chmod +x appcli-linux-amd64
-          chmod +x appcli-darwin-amd64
-          ./appcli-linux-amd64 --help
-          echo "listing linked libraries" && ldd appcli-linux-amd64
+          chmod +x sunlight-linux-amd64
+          chmod +x sunlight-darwin-amd64
+          ./sunlight-linux-amd64 --help
+          echo "listing linked libraries" && ldd sunlight-linux-amd64
 
           # restore modified dir to GH workspace.
           cp -arf $PROJECT_PATH/. $GITHUB_WORKSPACE/
@@ -65,4 +65,4 @@ jobs:
           # This is necessary in order to push a commit to the repo
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this line unchanged
         with:
-          upload_assets: 'appcli-linux-amd64 appcli-darwin-amd64'
+          upload_assets: 'sunlight-linux-amd64 sunlight-darwin-amd64'
