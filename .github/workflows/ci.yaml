@@ -1,0 +1,47 @@
+name: CI
+# This workflow is triggered on pushes to the repository.
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    container: ghcr.io/packagrio/packagr:latest-golang
+    env:
+      PROJECT_PATH: /go/src/github.com/packagrio/gocli-template
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          mkdir -p $PROJECT_PATH
+          cp -a $GITHUB_WORKSPACE/* $PROJECT_PATH/
+          cd $PROJECT_PATH
+
+          go mod vendor
+          go test -mod vendor ./...
+          go build -mod vendor -ldflags "-X main.goos=linux -X main.goarch=amd64" -o appcli-linux-amd64 -tags "static" cmd/appcli/appcli.go
+
+          # build mac binary
+          go build -mod vendor -ldflags "-X main.goos=darwin -X main.goarch=amd64" -o appcli-darwin-amd64 -tags "static" cmd/appcli/appcli.go
+
+          chmod +x appcli-linux-amd64
+          chmod +x appcli-darwin-amd64
+          ./appcli-linux-amd64 --help
+          echo "listing linked libraries" && ldd appcli-linux-amd64
+
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: appcli-linux-binary
+          path: ${{ env.PROJECT_PATH }}/appcli-linux-amd64
+          retention-days: 3
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: appcli-mac-binary
+          path: ${{ env.PROJECT_PATH }}/appcli-darwin-amd64
+          retention-days: 3

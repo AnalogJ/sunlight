@@ -1,0 +1,68 @@
+name: Release
+# This workflow is triggered manually
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump_type:
+        description: 'Version Bump Type (major, minor, patch)'
+        required: true
+        default: 'patch'
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: ghcr.io/packagrio/packagr:latest-golang
+    env:
+      PROJECT_PATH: /go/src/github.com/packagrio/gocli-template
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Bump version
+        id: bump_version
+        uses: packagrio/action-bumpr-go@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version_bump_type: ${{ github.event.inputs.version_bump_type }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          mkdir -p $PROJECT_PATH
+          cp -a $GITHUB_WORKSPACE/. $PROJECT_PATH/
+          cd $PROJECT_PATH
+
+          go mod vendor
+
+          go test -mod vendor -v -tags "static" ./...
+          # build linux binary
+          go build -mod vendor -ldflags "-X main.goos=linux -X main.goarch=amd64" -o appcli-linux-amd64 -tags "static" cmd/appcli/appcli.go
+
+          # build mac binary
+          go build -mod vendor -ldflags "-X main.goos=darwin -X main.goarch=amd64" -o appcli-darwin-amd64 -tags "static" cmd/appcli/appcli.go
+
+          chmod +x appcli-linux-amd64
+          chmod +x appcli-darwin-amd64
+          ./appcli-linux-amd64 --help
+          echo "listing linked libraries" && ldd appcli-linux-amd64
+
+          # restore modified dir to GH workspace.
+          cp -arf $PROJECT_PATH/. $GITHUB_WORKSPACE/
+      - name: Commit Changes
+        id: commit
+        uses: packagrio/action-releasr-go@master
+        env:
+          # This is necessary in order to push a commit to the repo
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this line unchanged
+      - name: Publish Release
+        id: publish
+        uses: packagrio/action-publishr-go@master
+        env:
+          # This is necessary in order to push a commit to the repo
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this line unchanged
+        with:
+          upload_assets: 'appcli-linux-amd64 appcli-darwin-amd64'
